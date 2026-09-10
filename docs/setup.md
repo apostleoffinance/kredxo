@@ -75,7 +75,7 @@ The Phase 12 sitting is `POST /stress/simulate` → `contracts/testdata/stress.j
 scripts/ci.sh
 ```
 
-Same path as `.github/workflows/test.yml`: `FOUNDRY_ETH_RPC_URL= forge test --offline` then backend pytest (sqlite). Fail-closed invariant: `forge test --match-contract InvariantTest` and `FailClosedTest` — any size over the live BTC cap reverts and leaves exposure unchanged.
+Same path as `.github/workflows/test.yml`: `forge build` (fetches solc 0.8.24) then `FOUNDRY_ETH_RPC_URL= forge test --offline`, then backend pytest (sqlite). Fail-closed invariant: `forge test --match-contract InvariantTest` and `FailClosedTest` — any size over the live BTC cap reverts and leaves exposure unchanged.
 
 `GET http://localhost:8000/api/markets` → borrow APR band (low 7.2%, normal 8%, high 14.5%). Utilized credit accrues interest to vault NAV (`forge test --match-contract InterestTest`).
 
