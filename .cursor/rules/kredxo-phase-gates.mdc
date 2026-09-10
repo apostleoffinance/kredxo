@@ -1,0 +1,18 @@
+---
+description: Kredxo phase gates. Never skip a phase. Always apply before writing code.
+alwaysApply: true
+---
+
+# Phase Gates
+
+Before writing code, read `docs/CURRENT_PHASE.md` and `docs/phase-gates.md`. Work only on the current phase. Do not start the next phase until every checkbox in the current phase is true.
+
+Build the financial mechanism first. Frontend comes after the loop works. The failure mode is a beautiful dashboard that does not control capital.
+
+Literal first sequence: Credit Vault → Credit Account → Trading Policy → Basic Trade Execution → Credit Score Engine → Adaptive Risk Engine → Policy Controller → Frontend → Stress Simulation → Polish + Demo.
+
+Do not open VS Code and implement all six contracts on day one. Sprint 1: repo + Foundry/Next/FastAPI + Monad env → Registry + Vault + tests → TradingAccount + tests → RiskPolicy/Controller + tests → simple execution + onchain reject → DB + ingest + initial scoring.
+
+Definition of done: LP deposits USDC → trader receives history-based credit → onchain trade → market risk rises → Kredxo reduces credit/policy → the smart contract rejects a now-over-limit trade → market recovers → credit increases again. Real Monad transactions.
+
+If asked to add features, map them to a phase and priority. Refuse out-of-scope work that would skip a gate.

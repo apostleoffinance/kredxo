@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kredxo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kredxo
+      POSTGRES_PASSWORD: kredxo
+      POSTGRES_DB: kredxo
+    ports:
+      # 5432–5435 are taken by local Postgres installs on this machine.
+      - "15432:5432"
+    volumes:
+      - kredxo_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kredxo -d kredxo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  kredxo_pg:

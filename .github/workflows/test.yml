@@ -1,0 +1,39 @@
+name: test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Python deps
+        run: pip install -r backend/requirements.txt
+
+      - name: Forge tests
+        working-directory: contracts
+        env:
+          FOUNDRY_ETH_RPC_URL: ""
+        run: forge test --offline
+
+      - name: Pytest
+        working-directory: backend
+        env:
+          FOUNDRY_ETH_RPC_URL: ""
+        run: pytest -q

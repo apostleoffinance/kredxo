@@ -1,0 +1,31 @@
+{
+  "score": 87,
+  "tier": "ADVANCED",
+  "baseCredit": 50000000000,
+  "tradeSize": 20000000000,
+  "leverage": 2000000000000000000,
+  "normal": {
+    "creditLimit": 49919000000,
+    "maxLeverage": 5000000000000000000,
+    "dailyLossLimit": 1996000000,
+    "riskLevel": 1,
+    "btcLimit": 24959000000,
+    "ethLimit": 14975000000
+  },
+  "shock": {
+    "creditLimit": 31948000000,
+    "maxLeverage": 3000000000000000000,
+    "dailyLossLimit": 998000000,
+    "riskLevel": 3,
+    "btcLimit": 11980000000,
+    "ethLimit": 7987000000
+  },
+  "elevated": {
+    "creditLimit": 40933000000,
+    "maxLeverage": 3500000000000000000,
+    "dailyLossLimit": 1705000000,
+    "riskLevel": 2,
+    "btcLimit": 17055000000,
+    "ethLimit": 11370000000
+  }
+}

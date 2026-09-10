@@ -1,0 +1,22 @@
+---
+description: Kredxo product definition, mental model, and framing. Always apply.
+alwaysApply: true
+---
+
+# Kredxo Product
+
+Kredxo is a Monad-native adaptive trading-credit market. LPs fund credit for proven traders and strategies. Kredxo turns verifiable trading history and real-time market risk into dynamic credit capacity and programmable trading authority.
+
+One-liner: Kredxo turns trading history into adaptive onchain credit.
+
+Kredxo is not a collateral lending protocol, not a credit-score dashboard, and not a trading bot. Never describe it as "a lending protocol on Monad."
+
+Mental model for the entire project:
+
+`Credit Intelligence → Adaptive Risk → Programmable Policy → Execution → Reassessment`
+
+Kredxo determines who deserves trading credit, how much, what they may do with it, and when those limits must change.
+
+Traders receive a Kredxo Credit Account, not unrestricted USDC in their wallet. Credit capacity (authorized) is distinct from credit utilization (drawn).
+
+Monad framing: fast, inexpensive, frequent settlement and policy updates. Use current official figures in docs: 10,000 TPS, 300ms block frequency, 600ms finality. Do not use older 400ms/800ms figures.

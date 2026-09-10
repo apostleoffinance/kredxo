@@ -1,0 +1,17 @@
+---
+description: Kredxo backend is credit/risk intelligence, not an enforcement layer.
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Backend
+
+Python decides. Solidity enforces. Do not reject trades only in FastAPI.
+
+Services: credit engine, risk engine, policy generator, Monad indexer/client.
+
+Proposed API: `GET /api/credit/{wallet}`, `/api/risk/{wallet}`, `/api/policy/{wallet}`, `/api/trades/{wallet}`, `/api/positions/{wallet}`, `/api/markets`. Writes: `POST /credit/evaluate`, `/risk/evaluate`, `/policy/propose`.
+
+Postgres holds historical state (users, wallets, trades, positions, markets, credit_profiles, credit_scores, risk_scores, risk_events, credit_accounts, credit_vaults, risk_policies, policy_history). Monad holds verifiable execution.
+
+Score and adaptive formulas live in `docs/credit-model.md` and `docs/risk-model.md`. Keep them deterministic.

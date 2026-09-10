@@ -1,0 +1,19 @@
+---
+description: Kredxo frontend must wrap the live protocol, not mock enforcement.
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend
+
+Do not start the main frontend until the onchain credit loop works (Phase 11).
+
+Feel: serious financial terminal, not a typical DeFi dashboard.
+
+Five screens only for MVP: Market, Credit Profile, Credit Account, Trade, Risk Center.
+
+Trade review must surface contract checks, then execute onchain. Show onchain rejection reasons. Never hide a revert behind a friendly client-only block.
+
+Risk Center must show multiplier math and policy diffs (e.g. $50K → $36K, 5x → 3.5x).
+
+Stack: Next.js, React, TypeScript, Tailwind, wagmi, viem, ECharts.

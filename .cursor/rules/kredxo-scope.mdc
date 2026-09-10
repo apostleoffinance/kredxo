@@ -1,0 +1,22 @@
+---
+description: Kredxo hackathon scope, priorities, and explicit non-goals. Always apply.
+alwaysApply: true
+---
+
+# Scope and Priorities
+
+Do not build: CEX integration, many collateral types, cross-chain credit, institutional prime brokerage, complex portfolio margin, AI agents as the primary product, DAO governance, tokenomics, many trading venues, a complex liquidation engine, full institutional underwriting, dozens of risk parameters.
+
+P0 must-have: Credit Vault, Credit Account, Risk Policy, onchain trade enforcement, Credit Score, Adaptive Risk.
+
+P1 strongly recommended: real trade execution, LP yield, stress simulation.
+
+P2 later: multiple credit markets, multiple venues, AI agents.
+
+P3 do not build for the hackathon: cross-chain, DAO/token.
+
+One USDC Trading Credit Market for MVP. Multiple risk markets are roadmap.
+
+Simple deterministic loss handling: losses reduce equity, raise risk, lower credit; breach of safety threshold triggers position reduction. No institutional liquidation system.
+
+Keep one simplified Monad-native execution path. Do not integrate external venues in the MVP.

@@ -1,0 +1,286 @@
+@import "tailwindcss";
+
+:root {
+  --background: #070708;
+  --foreground: #f4f4f5;
+  --line: #27272a;
+  --panel: #0c0c0e;
+  --muted: #71717a;
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+code,
+.kx-mono,
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+.kx-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.kx-top {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.kx-brand {
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+}
+
+.kx-mark {
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  color: #a1a1aa;
+}
+
+.kx-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.kx-nav {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.kx-nav-link {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  text-decoration: none;
+}
+
+.kx-nav-link.is-active {
+  color: #fafafa;
+  box-shadow: inset 0 -1px 0 #fafafa;
+}
+
+.kx-top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.kx-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.kx-main {
+  flex: 1;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.kx-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.kx-page-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-end;
+}
+
+.kx-page-head h1 {
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.kx-lede {
+  max-width: 28rem;
+  color: #a1a1aa;
+  font-size: 0.9rem;
+}
+
+.kx-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kx-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.kx-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.kx-metric,
+.kx-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 0.9rem 1rem;
+}
+
+.kx-value {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.kx-hint {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-top: 0.45rem;
+}
+
+.kx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.kx-table th,
+.kx-table td {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #1c1c1f;
+}
+
+.kx-table th {
+  color: var(--muted);
+  font-weight: 400;
+  text-align: left;
+}
+
+.kx-num {
+  text-align: right;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.kx-btn {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: #e4e4e7;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.kx-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.kx-btn-primary {
+  border-color: #d4d4d8;
+  color: #fafafa;
+}
+
+.kx-input {
+  width: 100%;
+  background: #09090b;
+  border: 1px solid var(--line);
+  color: #fafafa;
+  padding: 0.4rem 0.5rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.kx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.kx-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.kx-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.kx-checks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+}
+
+.kx-checks li {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr auto;
+  gap: 0.75rem;
+}
+
+.kx-checks .is-ok span:first-child {
+  color: #6ee7b7;
+}
+
+.kx-checks .is-bad span:first-child {
+  color: #fca5a5;
+}
+
+.kx-muted {
+  color: var(--muted);
+}
+
+.kx-ok {
+  color: #6ee7b7;
+  font-size: 0.8rem;
+}
+
+.kx-err {
+  color: #fca5a5;
+  font-size: 0.8rem;
+}
+
+.kx-spark {
+  width: 100%;
+  height: 64px;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .kx-grid-4,
+  .kx-split,
+  .kx-top {
+    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
+  }
+  .kx-grid-4 {
+    display: grid;
+  }
+}

@@ -1,0 +1,22 @@
+---
+description: Kredxo architecture split and enforcement invariant. Always apply.
+alwaysApply: true
+---
+
+# Architecture
+
+Principle: **Python decides. Solidity enforces.**
+
+The logic is programmable; the parameters are adaptive. Keep the system deterministic and auditable. Do not put the Python risk model in a smart contract.
+
+Onchain: LP deposits/withdrawals, credit allocation, credit account, trading permissions, risk policies, trade execution, position state, utilization, repayment, interest, PnL, policy changes, events.
+
+Offchain: historical processing, scoring, Sharpe/Sortino/drawdown, volatility/liquidity/correlation, risk modelling, simulation, credit recommendation.
+
+Hard invariant: a trader must never execute more risk than the currently active onchain policy. Rejection happens in the contract, not the frontend.
+
+Stack: Foundry/Solidity/OpenZeppelin on Monad; FastAPI/pandas/NumPy/Web3.py/PostgreSQL offchain; Next.js/React/TypeScript/Tailwind/wagmi/viem/ECharts frontend.
+
+Contracts (do not implement all six at once): Registry → Vault → TradingAccount, then RiskPolicy, RiskController, Settlement.
+
+Events to emit: CreditIssued, CreditAdjusted, PolicyUpdated, TradeApproved, TradeRejected, RiskLevelChanged, RepaymentMade.

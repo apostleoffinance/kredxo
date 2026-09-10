@@ -1,0 +1,21 @@
+---
+description: Solidity conventions for Kredxo protocol contracts.
+globs: contracts/**/*.sol
+alwaysApply: false
+---
+
+# Contracts
+
+Vault must distinguish TVL, committed/allocated credit, and actual utilization.
+
+`KredxoTradingAccount` controls capital. Traders cannot withdraw credit as unrestricted USDC.
+
+`KredxoRiskPolicy` stores creditLimit, maxLeverage, dailyLossLimit, validFrom, validUntil, riskLevel, active, plus per-market position limits.
+
+Only `KredxoRiskController` with `RISK_CONTROLLER_ROLE` may update policy. Trading reads the live policy, never a frontend cache.
+
+Trade validation (all onchain): account active, market allowed, credit available, leverage allowed, position limit, daily loss limit. Over-limit trades must revert.
+
+Minimum vault interface: `deposit`, `withdraw`, `allocateCredit`, `releaseCredit`, `repay`.
+
+Write Foundry tests for every new function before moving on. Access control, reentrancy, precision, stale/expired policies, and unauthorized allocation are blocking.
