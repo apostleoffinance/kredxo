@@ -8,6 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 import {IKredxoCreditVault} from "./IKredxoCreditVault.sol";
 import {IKredxoRiskPolicy} from "./IKredxoRiskPolicy.sol";
+import {IKredxoRouterAllow} from "./IKredxoVenues.sol";
 import {
     KredxoAccountInactive,
     KredxoInsufficientCredit,
@@ -87,6 +88,8 @@ contract KredxoTradingAccount is AccessControl, ReentrancyGuard {
     mapping(address market => bool) public marketAllowed;
     mapping(address market => uint256) public positionLimit;
     mapping(address market => uint256) public exposureOf;
+    address public executionRouter;
+    mapping(address venue => uint256) public paidToVenue;
 
     event AccountActivated(address indexed trader, uint256 creditLimit, uint256 maxLeverage, uint256 dailyLossLimit);
     event AccountDeactivated(address indexed trader);
@@ -99,6 +102,9 @@ contract KredxoTradingAccount is AccessControl, ReentrancyGuard {
     event TradeApproved(address indexed trader, address market, uint256 size);
     event TradeRejected(address indexed trader, string reason);
     event PositionClosed(address indexed trader, uint256 indexed id, int256 pnl);
+    event ExecutionRouterSet(address indexed router);
+    event VenuePaid(address indexed target, uint256 amount);
+    event VenuePaidToken(address indexed token, address indexed target, uint256 amount);
 
     constructor(address registry_, address vault_, address trader_, address admin_) {
         if (registry_ == address(0) || vault_ == address(0) || trader_ == address(0) || admin_ == address(0)) {
@@ -127,6 +133,40 @@ contract KredxoTradingAccount is AccessControl, ReentrancyGuard {
         if (policy_ == address(0)) revert KredxoZeroAddress();
         riskPolicy = policy_;
         emit RiskPolicyBound(policy_);
+    }
+
+    function setExecutionRouter(address router_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (router_ == address(0)) revert KredxoZeroAddress();
+        executionRouter = router_;
+        emit ExecutionRouterSet(router_);
+    }
+
+    /// @notice Move idle USDC to an allowlisted venue. Only the execution router. Not a trader withdrawal.
+    function payVenue(address target, uint256 amount) external nonReentrant {
+        if (msg.sender != executionRouter) revert KredxoUnauthorized();
+        if (target == address(0) || amount == 0) revert KredxoZeroAmount();
+        if (!IKredxoRouterAllow(executionRouter).isVenueTarget(target)) revert KredxoUnauthorized();
+        if (!active) _reject(REASON_INACTIVE);
+        _requireCurrentPolicyForTrade();
+        if (amount > idleUsdc()) _reject(REASON_CREDIT);
+        usdc().safeTransfer(target, amount);
+        paidToVenue[target] += amount;
+        emit VenuePaid(target, amount);
+    }
+
+    /// @notice Move a venue token from this account to an allowlisted target. Not a trader withdrawal.
+    function payVenueToken(address token, address target, uint256 amount) external nonReentrant {
+        if (msg.sender != executionRouter) revert KredxoUnauthorized();
+        if (token == address(0) || target == address(0) || amount == 0) revert KredxoZeroAmount();
+        if (token == address(usdc())) revert KredxoUnauthorized();
+        if (!IKredxoRouterAllow(executionRouter).isVenueTarget(target)) revert KredxoUnauthorized();
+        if (!active) _reject(REASON_INACTIVE);
+        _requireCurrentPolicyForTrade();
+        IERC20 asset = IERC20(token);
+        if (asset.balanceOf(address(this)) < amount) _reject(REASON_CREDIT);
+        asset.safeTransfer(target, amount);
+        paidToVenue[target] += amount;
+        emit VenuePaidToken(token, target, amount);
     }
 
     function creditLimit() public view returns (uint256) {
@@ -290,10 +330,15 @@ contract KredxoTradingAccount is AccessControl, ReentrancyGuard {
             uint256 loss = uint256(-pnl);
             if (loss > pos.margin) loss = pos.margin;
             dailyLoss += loss;
-            uint256 available = usdc().balanceOf(address(this));
+            IKredxoCreditVault vault_ = IKredxoCreditVault(VAULT);
+            uint256 debt = vault_.debtOf(TRADER);
+            uint256 available = idleUsdc();
             if (loss > available) loss = available;
+            if (loss > debt) loss = debt;
             if (loss > 0) {
-                usdc().safeTransfer(VAULT, loss);
+                usdc().safeIncreaseAllowance(VAULT, loss);
+                vault_.repay(TRADER, loss);
+                usedCredit = vault_.utilizedOf(TRADER);
             }
         }
 

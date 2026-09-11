@@ -4,12 +4,19 @@ import { useAccount } from "wagmi";
 
 import { DEMO_WALLET } from "./config";
 
-export function useViewWallet() {
+export function useViewWallet(opts?: { sitting?: boolean }) {
   const { address, isConnected } = useAccount();
-  const wallet = (address ?? DEMO_WALLET) as `0x${string}`;
+  if (opts?.sitting) {
+    return {
+      wallet: (address ?? DEMO_WALLET) as `0x${string}`,
+      isDemo: !isConnected,
+      isConnected,
+      connected: address,
+    };
+  }
   return {
-    wallet,
-    isDemo: !isConnected,
+    wallet: address as `0x${string}` | undefined,
+    isDemo: false,
     isConnected,
     connected: address,
   };

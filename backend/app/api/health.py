@@ -12,7 +12,7 @@ def health() -> dict:
     live_chain_id = fetch_chain_id()
     return {
         "status": "ok",
-        "phase": 13,
+        "phase": 19,
         "service": "kredxo-backend",
         "env": settings.kredxo_env,
         "database": {"configured": True, "reachable": ping_database()},

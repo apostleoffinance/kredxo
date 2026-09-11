@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     trading_account_address: str = ""
     credit_vault_address: str = ""
     usdc_address: str = ""
+    risk_policy_address: str = ""
+    risk_controller_address: str = ""
+    settlement_address: str = ""
     indexer_from_block: int = 0
     demo_wallet: str = "0x83000000000000000000000000000000000009A2"
 

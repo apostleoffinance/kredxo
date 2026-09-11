@@ -200,33 +200,45 @@ Feel: serious financial terminal, not a typical DeFi dashboard.
 
 ## Phase 14 — Security
 
-- [ ] Access control, reentrancy, precision
-- [ ] Unauthorized allocation / policy updates blocked
-- [ ] Withdrawal and accounting consistency
-- [ ] Stale/expired policies cannot authorize trades
-- [ ] Invariant: no trade beyond the active policy
+- [x] Access control, reentrancy, precision
+- [x] Unauthorized allocation / policy updates blocked
+- [x] Withdrawal and accounting consistency
+- [x] Stale/expired policies cannot authorize trades
+- [x] Invariant: no trade beyond the active policy
 
 **Safe to proceed when:** the invariant holds without trusting the frontend.
+
+**Status:** complete (2026-09-11)
 
 ---
 
 ## Phase 15 — Monad deployment
 
-- [ ] Deploy: Registry → Vault → Risk Policy → Risk Controller → Trading Account → Settlement
-- [ ] Configure USDC, controller, vault, venue, markets
+- [x] Deploy: Registry → Vault → Risk Policy → Risk Controller → Trading Account → Settlement
+- [x] Configure USDC, controller, vault, venue, markets
+
+**Status:** complete (2026-09-11) — `scripts/deploy-monad.sh` broadcasts `Deploy.s.sol`. Official testnet USDC `0x534b2f3A21130d7a60830c2Df862319e593943A3`. Addresses land in `contracts/deployments/monad-testnet.json`.
 
 ---
 
 ## Phase 16 — Seed the demo
 
-- [ ] Demo LP with 100,000 USDC
-- [ ] Demo trader: 100+ trades, ~$1.8M volume, ~$83K PnL, 8.7% max DD, 0 liquidations → score 87 / $50K
+- [x] Demo LP with 100,000 USDC
+- [x] Demo trader: 100+ trades, ~$1.8M volume, ~$83K PnL, 8.7% max DD, 0 liquidations → score 87 / $50K
+
+**Status:** complete (2026-09-11) — `python -m indexer.main seed` writes the 120-trade book. `scripts/seed-demo.sh` deposits up to 100,000 USDC, allocates $50K (or the faucet balance if smaller), applies NORMAL policy, and activates the account.
 
 ---
 
 ## Phase 17 — Demo + submission
 
-2–3 minute story:
+- [x] 2-minute pitch (`docs/pitch.md`)
+- [x] 3-minute technical demo (`docs/demo.md`)
+- [x] Submission packet: addresses, credentials, live app (`docs/submission.md`)
+- [x] Demo screen at `/demo`
+- [x] Tests: `scripts/ci.sh` (health `phase: 17`)
+
+Canonical 2–3 minute story (Foundry `LifecycleTest` / `StressTest`):
 
 1. LP deposits $100K
 2. Trader connects; score 87 / $50K base
@@ -237,7 +249,40 @@ Feel: serious financial terminal, not a typical DeFi dashboard.
 7. $20K BTC **rejected onchain**
 8. Recovery $32K → $41K → $50K
 
-UI, tests, docs, 3-minute technical demo, 2-minute pitch, live app, test credentials, contract addresses.
+Live Monad Testnet seed used Circle faucet USDC: $20 deposit, $20 credit, $10 BTC cap. Same loop; sizes match inventory.
+
+**Status:** complete (2026-09-11) — UI, tests, docs, pitch, demo script, contract addresses, test credentials. Record the sitting from `docs/demo.md`; do not redeploy.
+
+---
+
+## Phase 18 — Execution router (Perpl + Kuru)
+
+- [x] `ExecutionRouter` — `execute(venue, action, data)`; does not hold funds; no arbitrary calldata
+- [x] Protocol allowlist (venue, action, asset, target contract)
+- [x] Adapter 0: existing internal BTC/ETH `executeTrade` still works
+- [x] Perpl adapter (perps) — match chain; do not call mainnet 143 from testnet 10143 vault
+- [x] Kuru adapter (spot) — same chain/allowlist rules
+- [x] Policy gates venue + action + size; over-limit still reverts onchain
+- [x] Aave **not** in this phase (supply later; borrow later still)
+
+**Safe to proceed when:** a Credit Account can deploy only to allowlisted Perpl and/or Kuru under the live policy, internal sitting still passes, and USDC cannot leave via an unlisted target.
+
+**Status:** complete (2026-09-11) — Foundry `ExecutionRouterTest`. Router is not broadcast on the Phase 17 testnet vault; Internal `executeTrade` remains the live path. Official Kuru/Perpl testnet addresses confirmed; vault Circle USDC does not match either venue token (`KredxoWrongAsset`).
+
+---
+
+## Phase 19 — Venue FX hop (Circle USDC → venue token)
+
+- [x] Typed hop: Credit Account pays Circle USDC to the Kuru adapter, not the official Kuru router
+- [x] `anyToAnySwap` path is admin-set; no Kuru Flow / arbitrary calldata
+- [x] Output venue token (tUSDC / Perpl collateral) returns to the Credit Account
+- [x] Perpl open hops then `payVenueToken`; no hop → revert before Circle reaches Perpl
+- [x] Trader cannot withdraw; Internal `executeTrade` still works
+- [x] Aave **not** in this phase
+
+**Safe to proceed when:** a Foundry hop converts vault USDC to the venue token on the account, a missing path reverts without paying the venue, and the Phase 17 sitting vault is unchanged.
+
+**Status:** complete (2026-09-11) — Foundry `ExecutionRouterTest` (hop cases). Not broadcast. Live sitting remains Internal.
 
 ---
 

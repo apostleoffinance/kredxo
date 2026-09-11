@@ -27,7 +27,7 @@ export function InfrastructureStatus() {
 
       <section className="grid gap-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-6 sm:grid-cols-2">
         <StatusRow label="Phase" value="1 — Repository & infrastructure" />
-        <StatusRow label="Network" value={chainId === 143 ? "Monad" : "Monad Testnet"} />
+        <StatusRow label="Network" value={chainId === 143 ? "Monad Mainnet" : "Monad Testnet"} />
         <StatusRow label="Chain ID" value={String(chainId || monadNetwork.chainId)} />
         <StatusRow
           label="RPC"
@@ -50,7 +50,7 @@ export function InfrastructureStatus() {
           value={`${monadNetwork.blockFrequencyMs}ms blocks · ${monadNetwork.finalityMs}ms`}
         />
         <StatusRow label="API" value={apiUrl} />
-        <StatusRow label="Enforcement" value="Python decides. Solidity enforces." />
+        <StatusRow label="Enforcement" value="Credit adapts. Policy enforces." />
       </section>
 
       <p className="text-sm text-zinc-500">

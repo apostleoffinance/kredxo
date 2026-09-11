@@ -16,3 +16,5 @@ Do not open VS Code and implement all six contracts on day one. Sprint 1: repo +
 Definition of done: LP deposits USDC → trader receives history-based credit → onchain trade → market risk rises → Kredxo reduces credit/policy → the smart contract rejects a now-over-limit trade → market recovers → credit increases again. Real Monad transactions.
 
 If asked to add features, map them to a phase and priority. Refuse out-of-scope work that would skip a gate.
+
+Phase 19 (complete): Circle USDC hops to the venue token on the Credit Account. Do not implement Aave, Drake, Morpho, Euler, or Uniswap until a later phase. Do not call Monad mainnet venues from the testnet 10143 vault. Do not replace the Phase 17 sitting. The internal `executeTrade` path must keep working.

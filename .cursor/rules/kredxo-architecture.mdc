@@ -19,4 +19,6 @@ Stack: Foundry/Solidity/OpenZeppelin on Monad; FastAPI/pandas/NumPy/Web3.py/Post
 
 Contracts (do not implement all six at once): Registry → Vault → TradingAccount, then RiskPolicy, RiskController, Settlement.
 
+Phase 18 execution path: Credit Account → ExecutionRouter.execute(venue, action, data) → allowlisted adapter. The router does not hold credit. Adapter 0 is the internal BTC/ETH book. Next adapters: Perpl, then Kuru. Aave supply is a later phase. Policy must include venue, action, asset, and size. Rejection stays onchain.
+
 Events to emit: CreditIssued, CreditAdjusted, PolicyUpdated, TradeApproved, TradeRejected, RiskLevelChanged, RepaymentMade.

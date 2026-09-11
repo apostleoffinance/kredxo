@@ -181,7 +181,7 @@ contract KredxoCreditVault is AccessControl, ReentrancyGuard, ERC20 {
         emit Withdraw(msg.sender, assets, shares);
     }
 
-    function allocateCredit(address trader, uint256 amount) external onlyRole(ALLOCATOR_ROLE) {
+    function allocateCredit(address trader, uint256 amount) external onlyRole(ALLOCATOR_ROLE) nonReentrant {
         if (trader == address(0)) revert KredxoZeroAddress();
         if (amount == 0) revert KredxoZeroAmount();
         if (amount > availableLiquidity()) revert KredxoInsufficientLiquidity();
@@ -193,7 +193,7 @@ contract KredxoCreditVault is AccessControl, ReentrancyGuard, ERC20 {
         emit CreditIssued(trader, amount);
     }
 
-    function releaseCredit(address trader, uint256 amount) external onlyRole(ALLOCATOR_ROLE) {
+    function releaseCredit(address trader, uint256 amount) external onlyRole(ALLOCATOR_ROLE) nonReentrant {
         if (trader == address(0)) revert KredxoZeroAddress();
         if (amount == 0) revert KredxoZeroAmount();
 

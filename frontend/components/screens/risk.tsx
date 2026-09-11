@@ -1,35 +1,71 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { BaseError, parseUnits } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useWriteContract } from "wagmi";
 
-import { Metric } from "@/components/metric";
+import { ConnectHint } from "@/components/connect-hint";
+import { CreditState } from "@/components/credit-state";
+import { RiskBadge } from "@/components/risk-badge";
 import { accountAbi, controllerAbi } from "@/lib/abi";
 import { api, type StressResponse, type StressStage } from "@/lib/api";
-import {
-  MARKET_ADDR,
-  RISK_CONTROLLER_ADDRESS,
-  TRADING_ACCOUNT_ADDRESS,
-} from "@/lib/config";
+import { capOnchainPolicy } from "@/lib/checks";
+import { DEMO_WALLET, MARKET_ADDR } from "@/lib/config";
 import { leverageLabel, usd } from "@/lib/format";
-import { useViewWallet } from "@/lib/use-view-wallet";
+import { MONAD_TESTNET_ID } from "@/lib/monad";
+import { useCreditState } from "@/lib/use-credit-state";
 
 type Step = "idle" | "shocked" | "rejected" | "elevated" | "recovered";
+const PATH_COLS = ["NORMAL", "HIGH", "ELEVATED"] as const;
+type PathCol = (typeof PATH_COLS)[number];
+
+function pathCurrent(step: Step): PathCol {
+  if (step === "elevated") return "ELEVATED";
+  if (step === "shocked" || step === "rejected") return "HIGH";
+  return "NORMAL";
+}
+
+function PolicyPathRow({
+  label,
+  values,
+  current,
+  header,
+}: {
+  label: string;
+  values: [string, string, string];
+  current: PathCol;
+  header?: boolean;
+}) {
+  return (
+    <div className={header ? "kx-policy-row kx-policy-header" : "kx-policy-row"}>
+      <span className="kx-policy-label">{label}</span>
+      {PATH_COLS.map((col, i) => (
+        <span
+          key={col}
+          className={current === col ? "kx-policy-value is-current" : "kx-policy-value"}
+        >
+          {values[i]}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function RiskScreen() {
-  const { wallet } = useViewWallet();
+  const s = useCreditState();
+  const trader = (s.creditWallet ?? DEMO_WALLET) as `0x${string}`;
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const kredxo = s.kredxo;
   const qc = useQueryClient();
-  const live = useQuery({ queryKey: ["risk", wallet], queryFn: () => api.risk(wallet) });
   const [sitting, setSitting] = useState<StressResponse | null>(null);
   const [step, setStep] = useState<Step>("idle");
   const [probe, setProbe] = useState<string | null>(null);
   const { writeContractAsync, isPending } = useWriteContract();
 
   const simulate = useMutation({
-    mutationFn: () => api.simulateStress(wallet),
+    mutationFn: () => api.simulateStress(trader),
     onSuccess: async (data) => {
       setSitting(data);
       setProbe(null);
@@ -42,30 +78,34 @@ export function RiskScreen() {
       const reason = await probeTrade(data);
       setProbe(reason);
       if (reason) setStep("rejected");
-      await qc.invalidateQueries({ queryKey: ["risk", wallet] });
-      await qc.invalidateQueries({ queryKey: ["policy", wallet] });
+      await qc.invalidateQueries({ queryKey: ["risk", trader] });
+      await qc.invalidateQueries({ queryKey: ["policy", trader] });
+      await s.refetchOnchain();
     },
   });
 
   async function pushPolicy(stage: StressStage) {
-    if (!RISK_CONTROLLER_ADDRESS || !isConnected) return;
+    const controller = kredxo.riskController;
+    if (!controller || !isConnected || chainId !== MONAD_TESTNET_ID) return;
+    const capped = capOnchainPolicy(stage.onchain, s.issued || s.traderAllocated);
     const now = BigInt(Math.floor(Date.now() / 1000));
-    const limits = stage.onchain.markets.map((m) => BigInt(m.limit));
-    const markets = stage.onchain.markets.map(
+    const limits = capped.markets.map((m) => BigInt(m.limit));
+    const markets = capped.markets.map(
       (m) => MARKET_ADDR[m.symbol as keyof typeof MARKET_ADDR],
     );
     await writeContractAsync({
-      address: RISK_CONTROLLER_ADDRESS,
+      chainId: MONAD_TESTNET_ID,
+      address: controller,
       abi: controllerAbi,
       functionName: "applyPolicy",
       args: [
-        wallet,
-        BigInt(stage.onchain.creditLimit),
-        BigInt(stage.onchain.maxLeverage),
-        BigInt(stage.onchain.dailyLossLimit),
+        trader,
+        BigInt(capped.creditLimit),
+        BigInt(capped.maxLeverage),
+        BigInt(capped.dailyLossLimit),
         now,
-        now + 86_400n,
-        stage.onchain.riskLevel,
+        now + BigInt(86_400),
+        capped.riskLevel,
         markets,
         limits,
       ],
@@ -73,28 +113,30 @@ export function RiskScreen() {
   }
 
   async function probeTrade(data: StressResponse): Promise<string> {
-    if (!TRADING_ACCOUNT_ADDRESS || !isConnected) {
+    const accountAddr = kredxo.tradingAccount;
+    if (!accountAddr || !isConnected || chainId !== MONAD_TESTNET_ID) {
       return data.trade.allowed_after_shock
-        ? "Python: $20k still allowed (unexpected)"
-        : "Python: $20k BTC now exceeds the shocked BTC cap. Contract would revert exposure exceeds position limit.";
+        ? `${usd(data.trade.size)} still allowed after shock (unexpected)`
+        : `${usd(data.trade.size)} BTC now exceeds the shocked BTC cap.`;
     }
     try {
       await writeContractAsync({
-        address: TRADING_ACCOUNT_ADDRESS,
+        chainId: MONAD_TESTNET_ID,
+        address: accountAddr,
         abi: accountAbi,
         functionName: "executeTrade",
         args: [
           MARKET_ADDR.BTC,
           0,
           parseUnits(String(data.trade.size), 6),
-          BigInt(data.trade.leverage) * 10n ** 18n,
+          BigInt(data.trade.leverage) * BigInt(10) ** BigInt(18),
           parseUnits("60000", 18),
         ],
       });
       return "Trade submitted — unexpected after shock.";
     } catch (err) {
       const message = err instanceof BaseError ? err.shortMessage : String(err);
-      return `Onchain reject: ${message}`;
+      return `Rejected: ${message}`;
     }
   }
 
@@ -106,19 +148,30 @@ export function RiskScreen() {
     } catch (err) {
       setProbe(err instanceof BaseError ? err.shortMessage : String(err));
     }
-    await qc.invalidateQueries({ queryKey: ["risk", wallet] });
-    await qc.invalidateQueries({ queryKey: ["policy", wallet] });
+    await qc.invalidateQueries({ queryKey: ["risk", trader] });
+    await qc.invalidateQueries({ queryKey: ["policy", trader] });
+    await s.refetchOnchain();
   }
 
-  const current = live.data;
+  const live = s.risk.data;
   const stages = sitting?.stages;
+  const normalCredit = stages?.normal.current_credit ?? live?.current_credit;
+  const shockCredit = stages?.shock.current_credit;
+  const probeSize = sitting?.trade.size ?? 20_000;
+  const currentCol = pathCurrent(step);
 
   return (
     <section className="kx-page">
+      <CreditState />
       <header className="kx-page-head">
         <div>
           <p className="kx-kicker">Adaptive risk</p>
-          <h1>Risk Center</h1>
+          <h1>Risk</h1>
+          <p className="kx-lede">
+            Volatility, liquidity, and correlation are simulated. The resulting policy write and
+            trade rejection are Monad transactions.
+          </p>
+          {!isConnected ? <ConnectHint to="apply policy onchain" /> : null}
         </div>
         <button
           type="button"
@@ -126,62 +179,123 @@ export function RiskScreen() {
           disabled={simulate.isPending || isPending}
           onClick={() => simulate.mutate()}
         >
-          {simulate.isPending ? "Simulating…" : "SIMULATE MARKET STRESS"}
+          {simulate.isPending ? "Simulating…" : "Simulate market stress"}
         </button>
       </header>
 
-      <p className="kx-lede">
-        Injects vol +85%, liquidity −28%, drawdown −12%, correlation +20%. Python
-        proposes; the controller writes the policy; the account rejects a $20k BTC
-        trade that just worked.
-      </p>
-
-      <div className="kx-grid-4">
-        <Metric label="Base" value={usd(current?.base_credit)} />
-        <Metric
-          label="Trader × market"
-          value={
-            current
-              ? `${Number(current.trader_multiplier).toFixed(3)} × ${Number(current.market_multiplier).toFixed(3)}`
-              : "—"
-          }
-        />
-        <Metric label="Current credit" value={usd(current?.current_credit)} />
-        <Metric label="State" value={current?.risk_level ?? "—"} />
-      </div>
+      <ol className="kx-flow">
+        <li className={step === "idle" ? "is-now" : "is-done"}>
+          <span>Before</span>
+          <strong>NORMAL</strong>
+        </li>
+        <li className={step === "shocked" ? "is-now" : ["rejected", "elevated", "recovered"].includes(step) ? "is-done" : ""}>
+          <span>Stress</span>
+          <strong>HIGH</strong>
+        </li>
+        <li className={step === "rejected" ? "is-now is-block" : ["elevated", "recovered"].includes(step) ? "is-done" : ""}>
+          <span>Trade</span>
+          <strong>Blocked</strong>
+        </li>
+        <li className={step === "elevated" ? "is-now" : step === "recovered" ? "is-done" : ""}>
+          <span>Unwind</span>
+          <strong>ELEVATED</strong>
+        </li>
+        <li className={step === "recovered" ? "is-now is-done" : ""}>
+          <span>Restored</span>
+          <strong>NORMAL</strong>
+        </li>
+      </ol>
 
       <div className="kx-split">
         <div className="kx-panel">
-          <p className="kx-kicker">Sitting</p>
-          <ol className="kx-checks">
-            <li className={step !== "idle" ? "is-ok" : ""}>
-              <span>{step !== "idle" ? "DONE" : "WAIT"}</span>
-              <span>Approve under NORMAL</span>
-              <span className="kx-muted">{usd(stages?.normal.current_credit)}</span>
-            </li>
-            <li className={step === "shocked" || step === "rejected" || step === "elevated" || step === "recovered" ? "is-ok" : ""}>
-              <span>{["shocked", "rejected", "elevated", "recovered"].includes(step) ? "DONE" : "WAIT"}</span>
-              <span>HIGH shock onchain</span>
-              <span className="kx-muted">{usd(stages?.shock.current_credit)}</span>
-            </li>
-            <li className={step === "rejected" || step === "elevated" || step === "recovered" ? "is-bad" : ""}>
-              <span>{["rejected", "elevated", "recovered"].includes(step) ? "REVERT" : "WAIT"}</span>
-              <span>$20k BTC rejected</span>
-              <span className="kx-muted">{sitting?.trade.allowed_after_shock ? "allowed" : "over BTC cap"}</span>
-            </li>
-            <li className={step === "elevated" || step === "recovered" ? "is-ok" : ""}>
-              <span>{step === "elevated" || step === "recovered" ? "DONE" : "WAIT"}</span>
-              <span>ELEVATED unwind</span>
-              <span className="kx-muted">{usd(stages?.elevated.current_credit)}</span>
-            </li>
-            <li className={step === "recovered" ? "is-ok" : ""}>
-              <span>{step === "recovered" ? "DONE" : "WAIT"}</span>
-              <span>NORMAL restored</span>
-              <span className="kx-muted">{usd(stages?.recovered.current_credit)}</span>
-            </li>
-          </ol>
+          {step === "idle" ? (
+            <>
+              <p className="kx-kicker">Market conditions</p>
+              <table className="kx-table">
+                <tbody>
+                  <tr>
+                    <td>Volatility</td>
+                    <td className="kx-num">NORMAL</td>
+                  </tr>
+                  <tr>
+                    <td>Liquidity</td>
+                    <td className="kx-num">NORMAL</td>
+                  </tr>
+                  <tr>
+                    <td>Correlation</td>
+                    <td className="kx-num">NORMAL</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="kx-kicker" style={{ marginTop: "1rem" }}>
+                Your credit
+              </p>
+              <p className="kx-account-issued">{usd(s.issued)}</p>
+              <p className="kx-hint">
+                Issued onchain. Recommended {usd(s.recommended)} is eligibility, not inventory.
+              </p>
+            </>
+          ) : null}
+
+          {step === "shocked" || step === "rejected" ? (
+            <>
+              <p className="kx-kicker">Market stress detected</p>
+              <table className="kx-table">
+                <tbody>
+                  <tr>
+                    <td>BTC volatility</td>
+                    <td className="kx-num">+85%</td>
+                  </tr>
+                  <tr>
+                    <td>Liquidity</td>
+                    <td className="kx-num">−28%</td>
+                  </tr>
+                  <tr>
+                    <td>Correlation</td>
+                    <td className="kx-num">+20%</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="kx-kicker" style={{ marginTop: "1rem" }}>
+                Credit adjusted
+              </p>
+              <p className="kx-account-issued">
+                {usd(normalCredit)} → {usd(shockCredit)}
+              </p>
+              <p className="kx-hint">
+                Trader × market {s.traderMult?.toFixed(3) ?? "—"} × {s.marketMult?.toFixed(3) ?? "—"}
+              </p>
+            </>
+          ) : null}
+
+          {step === "elevated" || step === "recovered" ? (
+            <>
+              <p className="kx-kicker">{step === "recovered" ? "Market recovered" : "Unwind"}</p>
+              <p className="kx-account-issued">
+                {usd(shockCredit)} → {usd(stages?.[step].current_credit)}
+              </p>
+              <p className="kx-hint">
+                {step === "recovered"
+                  ? "Credit and caps restore with the market."
+                  : "Policy eases from HIGH to ELEVATED."}
+              </p>
+            </>
+          ) : null}
+
+          {step === "rejected" ? (
+            <div className="kx-block-card">
+              <p className="kx-kicker">Blocked</p>
+              <p>
+                Attempted {usd(probeSize)} BTC. Credit policy does not permit this position under
+                current risk.
+              </p>
+              {probe ? <p className="kx-err">{probe}</p> : null}
+            </div>
+          ) : null}
+          {probe && step !== "rejected" ? <p className="kx-err">{probe}</p> : null}
+
           {simulate.error ? <p className="kx-err">{String(simulate.error)}</p> : null}
-          {probe ? <p className="kx-err">{probe}</p> : null}
+
           <div className="kx-row">
             <button
               type="button"
@@ -197,61 +311,75 @@ export function RiskScreen() {
               disabled={!sitting || isPending}
               onClick={() => void recover("recovered")}
             >
-              Recover → NORMAL
+              Restore market
             </button>
           </div>
-          {!RISK_CONTROLLER_ADDRESS ? (
+          {!kredxo.riskController || chainId !== MONAD_TESTNET_ID ? (
             <p className="kx-hint">
-              Controller unset. Python sitting is live; Foundry StressTest applies the
-              same policies onchain.
+              {chainId !== MONAD_TESTNET_ID
+                ? "Switch to Monad Testnet to apply the new policy."
+                : "Policy control is not available on this network."}
             </p>
           ) : !isConnected ? (
-            <p className="kx-hint">Connect the controller key to push applyPolicy.</p>
-          ) : null}
+            <ConnectHint to="apply the new policy" />
+          ) : (
+            <p className="kx-hint">
+              applyPolicy is operator-gated. After stress, try an over-limit size on Execute — the
+              account reverts.
+            </p>
+          )}
         </div>
+
         <div className="kx-panel">
-          <p className="kx-kicker">Policy path</p>
-          <table className="kx-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th className="kx-num">NORMAL</th>
-                <th className="kx-num">HIGH</th>
-                <th className="kx-num">ELEVATED</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Credit</td>
-                <td className="kx-num">{usd(stages?.normal.policy.creditLimit ?? current?.policy.creditLimit)}</td>
-                <td className="kx-num">{usd(stages?.shock.policy.creditLimit)}</td>
-                <td className="kx-num">{usd(stages?.elevated.policy.creditLimit)}</td>
-              </tr>
-              <tr>
-                <td>Leverage</td>
-                <td className="kx-num">{leverageLabel(stages?.normal.policy.maxLeverage ?? current?.policy.maxLeverage)}</td>
-                <td className="kx-num">{leverageLabel(stages?.shock.policy.maxLeverage)}</td>
-                <td className="kx-num">{leverageLabel(stages?.elevated.policy.maxLeverage)}</td>
-              </tr>
-              <tr>
-                <td>BTC</td>
-                <td className="kx-num">{usd(stages?.normal.policy.markets.BTC ?? current?.policy.markets.BTC)}</td>
-                <td className="kx-num">{usd(stages?.shock.policy.markets.BTC)}</td>
-                <td className="kx-num">{usd(stages?.elevated.policy.markets.BTC)}</td>
-              </tr>
-              <tr>
-                <td>Level</td>
-                <td className="kx-num">{stages?.normal.risk_level ?? current?.risk_level ?? "—"}</td>
-                <td className="kx-num">{stages?.shock.risk_level ?? "—"}</td>
-                <td className="kx-num">{stages?.elevated.risk_level ?? "—"}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="kx-hint">
-            {sitting
-              ? `${usd(sitting.stages.shock.current_credit)} → ${usd(sitting.stages.elevated.current_credit)} → ${usd(sitting.stages.recovered.current_credit)}`
-              : "Run SIMULATE MARKET STRESS to walk HIGH → ELEVATED → NORMAL."}
-          </p>
+          <div className="kx-policy-head">
+            <p className="kx-kicker">Policy path</p>
+            <RiskBadge state={s.riskLevel} />
+          </div>
+          <div className="kx-policy-path" role="table" aria-label="Policy path">
+            <PolicyPathRow
+              header
+              label=""
+              current={currentCol}
+              values={["NORMAL", "HIGH", "ELEVATED"]}
+            />
+            <PolicyPathRow
+              label="Credit"
+              current={currentCol}
+              values={[
+                usd(stages?.normal.policy.creditLimit ?? live?.policy.creditLimit),
+                usd(stages?.shock.policy.creditLimit),
+                usd(stages?.elevated.policy.creditLimit),
+              ]}
+            />
+            <PolicyPathRow
+              label="Leverage"
+              current={currentCol}
+              values={[
+                leverageLabel(stages?.normal.policy.maxLeverage ?? live?.policy.maxLeverage),
+                leverageLabel(stages?.shock.policy.maxLeverage),
+                leverageLabel(stages?.elevated.policy.maxLeverage),
+              ]}
+            />
+            <PolicyPathRow
+              label="BTC"
+              current={currentCol}
+              values={[
+                usd(stages?.normal.policy.markets.BTC ?? live?.policy.markets.BTC),
+                usd(stages?.shock.policy.markets.BTC),
+                usd(stages?.elevated.policy.markets.BTC),
+              ]}
+            />
+            <PolicyPathRow
+              label="Level"
+              current={currentCol}
+              values={[
+                stages?.normal.risk_level ?? live?.risk_level ?? "—",
+                stages?.shock.risk_level ?? "—",
+                stages?.elevated.risk_level ?? "—",
+              ]}
+            />
+          </div>
+          <p className="kx-hint">Risk model above. Account limits remain vault-capped.</p>
         </div>
       </div>
     </section>

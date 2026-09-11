@@ -1,15 +1,15 @@
 # Current phase
 
-**Active:** Phase 14 — Security
+**Active:** Complete — Phase 19 venue FX hop (Circle USDC → venue token)
 
-**Last completed:** Phase 13 — Testing (2026-09-10)
+**Last completed:** Phase 19 — Venue hop (2026-09-11)
 
-Do not start Phase 15 until every Phase 14 checkbox in `docs/phase-gates.md` is true.
+Phase 17 sitting stays live on Monad Testnet. Do not redeploy that vault. Do not re-seed.
 
 ## Now
 
-Access control, reentrancy, precision, unauthorized writes, stale policy, and the same fail-closed invariant — without trusting the frontend.
+The execution router hops Circle USDC to the venue token **on the Credit Account** via a typed Kuru `anyToAnySwap` path. The trader never holds the dollars. The router does not hold funds and does not execute Kuru Flow calldata. Official Kuru/Perpl routers are not `payVenue` targets for Circle USDC. Proof: `FOUNDRY_ETH_RPC_URL= forge test --offline --match-contract ExecutionRouterTest`. Live testnet account still uses `executeTrade` until a new account + router is bound.
 
 ## Next
 
-Phase 15 — Monad deployment
+Bind a hop path on a new account (not the sitting vault) only after a real Kuru route from Circle `0x534b…` to Kuru tUSDC `0x3bA3…` is confirmed. Aave V3 **supply only** (later). Do not call mainnet 143 from the 10143 vault.

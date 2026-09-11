@@ -16,6 +16,8 @@ Only `KredxoRiskController` with `RISK_CONTROLLER_ROLE` may update policy. Tradi
 
 Trade validation (all onchain): account active, market allowed, credit available, leverage allowed, position limit, daily loss limit. Over-limit trades must revert.
 
+Phase 18 `ExecutionRouter` must not hold funds, must not execute arbitrary calldata, and may only call allowlisted adapters. Adapter 0 is this account. Next: Perpl, then Kuru. Aave is out of Phase 18.
+
 Minimum vault interface: `deposit`, `withdraw`, `allocateCredit`, `releaseCredit`, `repay`.
 
 Write Foundry tests for every new function before moving on. Access control, reentrancy, precision, stale/expired policies, and unauthorized allocation are blocking.

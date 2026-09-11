@@ -7,20 +7,17 @@ export function Metric({
   label: string;
   value: string;
   hint?: string;
-  tone?: "default" | "good" | "warn" | "bad";
+  tone?: "default" | "good" | "warn" | "bad" | "intel" | "enforce";
 }) {
-  const color =
-    tone === "good"
-      ? "text-emerald-300"
-      : tone === "warn"
-        ? "text-amber-300"
-        : tone === "bad"
-          ? "text-red-300"
-          : "text-zinc-100";
+  const box =
+    tone === "intel" ? "kx-metric is-intel" : tone === "enforce" ? "kx-metric is-enforce" : "kx-metric";
+  const valueTone =
+    tone === "good" || tone === "warn" || tone === "bad" ? `kx-value is-${tone}` : "kx-value";
+
   return (
-    <div className="kx-metric">
+    <div className={box}>
       <p className="kx-kicker">{label}</p>
-      <p className={`kx-value ${color}`}>{value}</p>
+      <p className={valueTone}>{value}</p>
       {hint ? <p className="kx-hint">{hint}</p> : null}
     </div>
   );

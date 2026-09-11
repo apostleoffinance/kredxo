@@ -30,17 +30,29 @@ export type PolicyJson = {
   riskLevel: string;
 };
 
+export type OnchainPolicy = {
+  creditLimit: number;
+  maxLeverage: number;
+  dailyLossLimit: number;
+  riskLevel: number;
+  markets: { symbol: string; limit: number }[];
+};
+
 export type PolicyResponse = {
   wallet: string;
   risk_level: string;
   policy: PolicyJson;
-  onchain: {
-    creditLimit: number;
-    maxLeverage: number;
-    dailyLossLimit: number;
-    riskLevel: number;
-    markets: { symbol: string; limit: number }[];
-  };
+  onchain: OnchainPolicy;
+};
+
+export type CreditRequestResponse = {
+  wallet: string;
+  score: number;
+  tier: string;
+  base_credit: string;
+  current_credit: string;
+  policy: PolicyJson;
+  onchain: OnchainPolicy;
 };
 
 export type TradesResponse = {
@@ -146,8 +158,54 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type DemoResponse = {
+  phase: number;
+  product: { tagline: string; one_liner: string; principle: string };
+  network: {
+    name: string;
+    chain_id: number;
+    explorer: string;
+    tps: number;
+    block_frequency_ms: number;
+    finality_ms: number;
+  };
+  demo_wallet: string;
+  lp: string | null;
+  contracts: Record<string, string | null>;
+  seed: {
+    deposited: string;
+    credit: string;
+    btcLimit: string;
+    note: string;
+    txs: Record<string, string>;
+  } | null;
+  sitting: {
+    canonical: Record<string, number | string>;
+    live: Record<string, number | string>;
+  };
+  venues: {
+    adapter0: string;
+    first: string;
+    second: string;
+    later: string;
+    not_this_phase: string[];
+    testnet: {
+      chain_id: number;
+      kuru_router: string;
+      kuru_usdc: string;
+      perpl_exchange: string;
+      perpl_collateral: string;
+      vault_usdc: string;
+      kuru_usdc_match: boolean;
+      perpl_collateral_match: boolean;
+    };
+    pay_venue: string;
+  };
+};
+
 export const api = {
   health: () => get<{ phase: number; status: string; monad: { rpc_ok: boolean } }>("/health"),
+  demo: () => get<DemoResponse>("/api/demo"),
   credit: (wallet: string) => get<CreditResponse>(`/api/credit/${wallet}`),
   risk: (wallet: string) => get<RiskResponse>(`/api/risk/${wallet}`),
   policy: (wallet: string) => get<PolicyResponse>(`/api/policy/${wallet}`),
@@ -156,7 +214,7 @@ export const api = {
   positions: (wallet: string) =>
     get<{ wallet: string; positions: unknown[] }>(`/api/positions/${wallet}`),
   requestCredit: (wallet: string, market?: MarketShock) =>
-    post<Record<string, unknown>>("/credit/request", { wallet, market }),
+    post<CreditRequestResponse>("/credit/request", { wallet, market }),
   evaluateRisk: (wallet: string, market: MarketShock) =>
     post<RiskResponse>("/risk/evaluate", { wallet, market }),
   proposePolicy: (wallet: string, market: MarketShock) =>

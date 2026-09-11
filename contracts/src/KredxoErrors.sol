@@ -16,3 +16,7 @@ error KredxoTradeRejected(string reason);
 error KredxoPositionClosed();
 error KredxoPolicyBound();
 error KredxoPolicyExpired();
+error KredxoWrongChain();
+error KredxoVenueNotAllowed();
+error KredxoActionNotAllowed();
+error KredxoWrongAsset();

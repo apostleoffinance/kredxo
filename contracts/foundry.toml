@@ -12,7 +12,7 @@ evm_version = "cancun"
 network = "monad"
 eth-rpc-url = "https://testnet-rpc.monad.xyz"
 chain_id = 10143
-fs_permissions = [{ access = "read", path = "./" }]
+fs_permissions = [{ access = "read-write", path = "./" }]
 
 [rpc_endpoints]
 monad_testnet = "https://testnet-rpc.monad.xyz"

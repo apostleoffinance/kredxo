@@ -74,6 +74,8 @@ Failures emit `TradeRejected(trader, reason)` and revert `KredxoTradeRejected(re
 
 `closePosition` realizes PnL; losses transfer USDC to the vault and count toward the daily loss cap.
 
+Phase 18 adds a policy-controlled router in front of approved Monad venues. Adapter 0 remains this internal book. First external venues: Perpl (perps), then Kuru (spot). Aave supply is later. The Credit Account stays the actor; the router does not hold funds and must not execute arbitrary calldata. Phase 19 hops Circle USDC to the venue token on the Credit Account via a typed `anyToAnySwap` path. Official Kuru/Perpl testnet tokens are not Circle USDC; see `docs/venues.md`.
+
 ## Risk policy
 
 ```

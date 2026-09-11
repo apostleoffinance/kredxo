@@ -1,0 +1,73 @@
+# Submission packet
+
+Track: Onchain Finance & Trading.
+
+**Kredxo turns trading history into adaptive onchain credit.**
+
+Python decides. Solidity enforces. Traders receive a Credit Account, not unrestricted USDC.
+
+## Live app
+
+Contracts are on Monad Testnet. Run the terminal locally:
+
+```bash
+docker compose up -d postgres
+cd backend && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000
+cd frontend && npm run dev
+```
+
+- UI: http://localhost:3000/demo
+- API health: http://localhost:8000/health (`phase: 17`)
+- RPC: https://testnet-rpc.monad.xyz (chain **10143**)
+- Explorer: https://testnet.monadvision.com
+
+Pitch: [pitch.md](pitch.md). Demo script: [demo.md](demo.md). Setup: [setup.md](setup.md).
+
+## Test credentials
+
+| Role | Address | Notes |
+|---|---|---|
+| Demo trader | `0x83000000000000000000000000000000000009A2` | 120-trade book, score 87. Unconnected UI uses this. Do not change. |
+| LP / admin / controller | `0xcEca282D86684cF4115aB8B7E699b23c6d9C0f6D` | Deployer. Operator key is **not** distributed. |
+
+Judges can walk Profile / Market / the Python stress sitting without a key. Onchain `applyPolicy` and `executeTrade` need the operator. Foundry tests do not.
+
+## Monad Testnet contracts
+
+| Contract | Address |
+|---|---|
+| USDC (official, 6 decimals) | [`0x534b2f3A21130d7a60830c2Df862319e593943A3`](https://testnet.monadvision.com/address/0x534b2f3A21130d7a60830c2Df862319e593943A3) |
+| Registry | [`0x66a65B38D40fC8747b45166Ee475044dcABBE1ED`](https://testnet.monadvision.com/address/0x66a65B38D40fC8747b45166Ee475044dcABBE1ED) |
+| Credit Vault | [`0xd5dF1Ba644019cf646f932F0c2FE740196517ddc`](https://testnet.monadvision.com/address/0xd5dF1Ba644019cf646f932F0c2FE740196517ddc) |
+| Risk Policy | [`0x821F70447f96cf0510A842E2ecb7903B371382c9`](https://testnet.monadvision.com/address/0x821F70447f96cf0510A842E2ecb7903B371382c9) |
+| Risk Controller | [`0xe8489dA27372c0444f531d15021b7292aB08c772`](https://testnet.monadvision.com/address/0xe8489dA27372c0444f531d15021b7292aB08c772) |
+| Trading Account | [`0xb5475746FeaF26690ED92Bbea0DA42dE5b356753`](https://testnet.monadvision.com/address/0xb5475746FeaF26690ED92Bbea0DA42dE5b356753) |
+| Settlement | [`0x28162dC547Db4B91f2Fa0040D3feB7855e1F3b19`](https://testnet.monadvision.com/address/0x28162dC547Db4B91f2Fa0040D3feB7855e1F3b19) |
+| BTC market | `0x0000000000000000000000000000000000000B7C` |
+| ETH market | `0x0000000000000000000000000000000000000e7C` |
+
+Source: `contracts/deployments/monad-testnet.json`.
+
+## Seed txs (already broadcast)
+
+| Action | Tx |
+|---|---|
+| Approve USDC | [0x203eceb8…](https://testnet.monadvision.com/tx/0x203eceb884509660d38bdd168eeba81d57e061fcc3f6fef1abce6373a7c4e2ab) |
+| Deposit 20 USDC | [0x3ed54ecc…](https://testnet.monadvision.com/tx/0x3ed54ecc51a84cdc47ceeacd5384ac166d79f0df8359df68c869ec4f542b5706) |
+| Allocate credit | [0x0f9421da…](https://testnet.monadvision.com/tx/0x0f9421da8e477bcd14d2aca288fef146813ad5387f98c0d225a9334e06e3cd9a) |
+| Apply NORMAL policy | [0x6bef4d0b…](https://testnet.monadvision.com/tx/0x6bef4d0bc1e2b67b457b562b0a2b35b2518a0be57e65d1ce9b026fb67771e668) |
+| Activate account | [0x6a7975bb…](https://testnet.monadvision.com/tx/0x6a7975bb4f203c38bae2ba48656effb35fed6f200445804ceda051227dca7097) |
+
+Do not redeploy. Do not re-run `scripts/seed-demo.sh`.
+
+## Tests
+
+```bash
+scripts/ci.sh
+```
+
+`forge build` then `FOUNDRY_ETH_RPC_URL= forge test --offline`, then backend pytest. Fail-closed: over-limit size reverts in the account. Stress sitting: `forge test --match-contract StressTest`.
+
+## Definition of done
+
+LP deposits USDC → history-based credit → onchain trade → market risk rises → policy tightens → contract rejects an over-limit trade → recovery. Canonical path is in Foundry. Live path is the seeded vault plus the Demo / Risk screens.

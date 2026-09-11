@@ -9,7 +9,7 @@ import {KredxoCreditVault} from "../src/KredxoCreditVault.sol";
 import {KredxoTradingAccount} from "../src/KredxoTradingAccount.sol";
 import {MockUSDC} from "../test/mocks/MockUSDC.sol";
 
-/// @dev Local/anvil wiring. Do not use for Monad deployment until Phase 15.
+/// @dev Local/anvil wiring only. Monad testnet uses `script/Deploy.s.sol`.
 contract DeployStubs is Script {
     function run() external {
         address admin = vm.envOr("KREDXO_ADMIN", msg.sender);

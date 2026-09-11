@@ -16,7 +16,7 @@ Python decides. Solidity enforces.
 
 ## Status
 
-Phase 13 complete. Next is Phase 14 — Security. See `docs/CURRENT_PHASE.md` and [setup](docs/setup.md).
+Phase 17 complete — demo + submission. **Phase 19 complete:** venue FX hop (Circle USDC → Kuru/Perpl token on the Credit Account). Live vault remains Internal on Monad Testnet. [Submission](docs/submission.md) · [Pitch](docs/pitch.md) · [Demo](docs/demo.md) · [Current phase](docs/CURRENT_PHASE.md).
 
 ## Repo
 
@@ -36,6 +36,9 @@ cp .env.example .env
 
 ## Docs
 
+- [Submission](docs/submission.md)
+- [Pitch](docs/pitch.md)
+- [Demo script](docs/demo.md)
 - [Architecture](docs/architecture.md)
 - [Protocol](docs/protocol.md)
 - [Credit model](docs/credit-model.md)

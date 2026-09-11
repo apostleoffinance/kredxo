@@ -19,4 +19,16 @@ One USDC Trading Credit Market for MVP. Multiple risk markets are roadmap.
 
 Simple deterministic loss handling: losses reduce equity, raise risk, lower credit; breach of safety threshold triggers position reduction. No institutional liquidation system.
 
-Keep one simplified Monad-native execution path. Do not integrate external venues in the MVP.
+MVP execution: one simplified Monad-native path (`KredxoTradingAccount.executeTrade`). Do not integrate external venues in Phases 0–17.
+
+## Venue router (Phase 18+)
+
+Monad-native, policy-controlled execution only. The Credit Account is the actor. Credit cannot be withdrawn or transferred to the trader wallet. The router must not hold funds and must not execute arbitrary calldata.
+
+**Build first:** Perpl (perps), then Kuru (spot DEX). Keep the internal BTC/ETH book as adapter 0.
+
+**Later:** Aave V3 **supply only**. Aave borrow is out until portfolio accounting can represent a second debt.
+
+**Not this wave:** Drake, LeverUp, Morpho, Euler, Uniswap, Hanji, bridges, CEX.
+
+Live demo vault is Monad **Testnet 10143**. Mainnet 143 protocol addresses must not be called from that vault. Match chain, USDC, and allowlist per adapter.

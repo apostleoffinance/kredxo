@@ -27,4 +27,8 @@ def get_markets() -> dict:
         "utilization": format(utilization, "f"),
         "vault": settings.credit_vault_address or None,
         "usdc": settings.usdc_address or None,
+        "policy": settings.risk_policy_address or None,
+        "controller": settings.risk_controller_address or None,
+        "settlement": settings.settlement_address or None,
+        "trading_account": settings.trading_account_address or None,
     }

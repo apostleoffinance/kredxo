@@ -1,35 +1,55 @@
 import { defineChain } from "viem";
 
-const rpcUrl =
+export const MONAD_TESTNET_ID = 10143;
+export const MONAD_MAINNET_ID = 143;
+
+const testnetRpc =
   process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://testnet-rpc.monad.xyz";
-const wsUrl =
+const testnetWs =
   process.env.NEXT_PUBLIC_MONAD_WS_URL ?? "wss://testnet-rpc.monad.xyz";
-const explorerUrl =
-  process.env.NEXT_PUBLIC_MONAD_EXPLORER_URL ??
-  "https://testnet.monadvision.com";
-const chainId = Number(process.env.NEXT_PUBLIC_MONAD_CHAIN_ID ?? "10143");
+const mainnetRpc =
+  process.env.NEXT_PUBLIC_MONAD_MAINNET_RPC_URL ?? "https://rpc.monad.xyz";
+const mainnetWs =
+  process.env.NEXT_PUBLIC_MONAD_MAINNET_WS_URL ?? "wss://rpc.monad.xyz";
 
 export const monadTestnet = defineChain({
-  id: chainId,
-  name: chainId === 143 ? "Monad" : "Monad Testnet",
+  id: MONAD_TESTNET_ID,
+  name: "Monad Testnet",
   nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
   rpcUrls: {
     default: {
-      http: [rpcUrl],
-      webSocket: [wsUrl],
+      http: [testnetRpc],
+      webSocket: [testnetWs],
     },
   },
   blockExplorers: {
-    default: { name: "MonadVision", url: explorerUrl },
+    default: { name: "MonadVision", url: "https://testnet.monadvision.com" },
   },
-  testnet: chainId !== 143,
+  testnet: true,
 });
 
+export const monadMainnet = defineChain({
+  id: MONAD_MAINNET_ID,
+  name: "Monad",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: [mainnetRpc],
+      webSocket: [mainnetWs],
+    },
+  },
+  blockExplorers: {
+    default: { name: "MonadVision", url: "https://monadvision.com" },
+  },
+  testnet: false,
+});
+
+/** Default app view is testnet. Kredxo contracts are not on mainnet yet. */
 export const monadNetwork = {
-  chainId,
-  rpcUrl,
-  wsUrl,
-  explorerUrl,
+  chainId: MONAD_TESTNET_ID,
+  rpcUrl: testnetRpc,
+  wsUrl: testnetWs,
+  explorerUrl: "https://testnet.monadvision.com",
   nativeSymbol: "MON",
   blockFrequencyMs: 300,
   finalityMs: 600,

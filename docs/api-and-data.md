@@ -16,6 +16,7 @@ Offchain contract between the risk/credit engines, Postgres, and the frontend. M
 | POST | `/credit/request` | Full request: score → adaptive credit → policy (onchain units) |
 | POST | `/risk/evaluate` | Recompute adaptive risk |
 | POST | `/policy/propose` | Sign/authorize onchain policy update |
+| GET | `/api/demo` | Submission snapshot: addresses, explorer, sitting, venues (hop Circle USDC → venue token on the Credit Account) |
 | POST | `/stress/simulate` | HIGH shock → ELEVATED → NORMAL sitting and $20k BTC probe |
 
 ## Postgres
@@ -26,12 +27,13 @@ Offchain contract between the risk/credit engines, Postgres, and the frontend. M
 
 `id`, `wallet`, `market`, `side`, `size`, `entry_price`, `exit_price`, `pnl`, `leverage`, `timestamp`, `tx_hash`
 
-## Frontend routes (Phase 11)
+## Frontend routes
 
 | Screen | Job |
 |---|---|
+| Demo | Sitting, onchain vs Python credit, explorer links |
 | Market | TVL, utilization, APR, Supply USDC |
 | Credit Profile | Score, tier, metrics, Request Credit |
 | Credit Account | Current/used/available, risk, limits |
-| Trade | Size, leverage, onchain checks, execute/reject |
+| Trade | Venue (internal / Perpl / Kuru), size, leverage, onchain checks, execute/reject |
 | Risk Center | Multipliers, HIGH → ELEVATED → NORMAL sitting, `SIMULATE MARKET STRESS` |

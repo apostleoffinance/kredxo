@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { Shell } from "@/components/shell";
+import { THEME_BOOT } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -29,8 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${sans.variable} ${mono.variable} antialiased`}>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <body className={`${sans.variable} ${mono.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <Providers>
           <Shell>{children}</Shell>
         </Providers>

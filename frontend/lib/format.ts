@@ -19,6 +19,22 @@ export function compact(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+export function units6(value: bigint | undefined | null): number | null {
+  return value === undefined || value === null ? null : Number(value) / 1e6;
+}
+
+export function sameAddr(a?: string | null, b?: string | null): boolean {
+  return Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+}
+
+export const RISK_LEVELS = ["LOW", "NORMAL", "ELEVATED", "HIGH", "CRITICAL"] as const;
+
+export function riskLevelName(level: number | bigint | undefined | null): string {
+  if (level === undefined || level === null) return "—";
+  const i = Number(level);
+  return RISK_LEVELS[i] ?? "—";
+}
+
 export function leverageLabel(value: string | number | null | undefined): string {
   const n = Number(value ?? 0);
   if (!Number.isFinite(n) || n === 0) return "—";

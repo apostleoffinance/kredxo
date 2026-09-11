@@ -17,6 +17,8 @@ Mental model for the entire project:
 
 Kredxo determines who deserves trading credit, how much, what they may do with it, and when those limits must change.
 
-Traders receive a Kredxo Credit Account, not unrestricted USDC in their wallet. Credit capacity (authorized) is distinct from credit utilization (drawn).
+Traders receive a Kredxo Credit Account, not unrestricted USDC in their wallet. Credit capacity (authorized) is distinct from credit utilization (drawn). **Capital access without capital custody.**
+
+Kredxo is the credit and risk layer, not the long-term market. MVP venue is the internal Monad BTC/ETH book. First external venues: **Perpl** (perps) and **Kuru** (spot). Aave supply comes after those two. Same account; still no withdrawal.
 
 Monad framing: fast, inexpensive, frequent settlement and policy updates. Use current official figures in docs: 10,000 TPS, 300ms block frequency, 600ms finality. Do not use older 400ms/800ms figures.
